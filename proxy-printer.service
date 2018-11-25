@@ -1,0 +1,13 @@
+[Unit]
+Description=Random Proxy Card Printer
+
+[Service]
+ExecStart=/home/pi/.local/bin/pipenv run ./bin/random-proxy-printer.py -d data.sqlite3 -k /dev/input/event1 -b /dev/input/event0 -a 0x70 -p /dev/serial0
+Group=pi
+Restart=always
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/Projects/random-proxy-printer
+
+[Install]
+WantedBy=multi-user.target
