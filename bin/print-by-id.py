@@ -7,8 +7,8 @@ from sqlite3 import connect, Row
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Print an illustration for a card by ID")
-    parser.add_argument("id", help="ID of the card to print")
+    parser = ArgumentParser(description="Print an illustration for a proxy by ID")
+    parser.add_argument("id", help="ID of the proxy to print")
     parser.add_argument("-d", "--database-path", help="Path to RandomProxyPrinter basic database", required=True, dest="database_path")
     parser.add_argument("-p", "--printer", help="Path to printer device", required=True)
 

@@ -9,6 +9,7 @@ from io import BytesIO
 from json import loads
 from PIL import Image
 from sqlite3 import connect, Row
+from textwrap import wrap
 
 
 class RandomProxyPrinter:
@@ -30,11 +31,14 @@ class RandomProxyPrinter:
         async for event in device.async_read_loop():
             if event.type == 1 and event.value == 1:
                 cursor = self.connection.cursor()
-                cursor.execute("SELECT * FROM cards WHERE value = ? ORDER BY RANDOM() LIMIT 1", (str(self.value)))
-                card = cursor.fetchone()
+                cursor.execute("SELECT * FROM proxies WHERE value = ? ORDER BY RANDOM() LIMIT 1", (str(self.value)))
+                proxy = cursor.fetchone()
 
-                self.printer.image(Image.open(BytesIO(card["illustration"])), impl="bitImageColumn")
-                self.printer.text(card["description"] + "\n\n\n\n")
+                self.printer.image(Image.open(BytesIO(proxy["illustration"])), impl="bitImageColumn")
+                for line in proxy["description"].split("\n"):
+                    for wrapped_line in wrap(line, 32):
+                        self.printer.text(wrapped_line + "\n")
+                self.printer.text("\n\n\n")
 
                 cursor.close()
             elif event.type == 2:

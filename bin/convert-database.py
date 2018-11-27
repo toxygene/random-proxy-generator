@@ -20,15 +20,15 @@ if __name__ == "__main__":
 
         cursor = connection.cursor()
 
-        cursor.execute("SELECT * FROM cards")
-        cards = cursor.fetchall()
+        cursor.execute("SELECT * FROM proxies")
+        proxies = cursor.fetchall()
 
-        for card in cards:
+        for proxy in proxies:
             if args.verbose:
-                print(f"resizing and converting '{card[name]}' ({card[id]})", file=stdout)
+                print(f"resizing and converting '{proxy[name]}' ({proxy[id]})", file=stdout)
 
             try:
-                with Image.open(BytesIO(card["illustration"])) as image:
+                with Image.open(BytesIO(proxy["illustration"])) as image:
                     if image.width > 384:
                         height = image.height * int(384/image.width)
                         image.thumbnail((384, height), Image.BICUBIC)
@@ -39,9 +39,9 @@ if __name__ == "__main__":
                     with BytesIO() as converted_image:
                         image.save(converted_image, format="PNG", optimize=True)
 
-                        cursor.execute("UPDATE cards SET description = ?, illustration = ? WHERE id = ?", (unidecode(card["description"]), Binary(converted_image.getvalue()), card["id"]))
+                        cursor.execute("UPDATE proxies SET description = ?, illustration = ? WHERE id = ?", (unidecode(proxy["description"]), Binary(converted_image.getvalue()), proxy["id"]))
             except:
-                print(f"An error occurred while resizing and converting '{card[1]}'", file=stderr)
+                print(f"An error occurred while resizing and converting '{proxy[1]}'", file=stderr)
 
                 if args.verbose:
                     print_exc(file=stderr)
