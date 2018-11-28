@@ -19,7 +19,7 @@ if __name__ == "__main__":
     connection.row_factory = Row
     cursor = connection.cursor()
 
-    cursor.execute("SELECT illustration FROM cards WHERE id = ?", (args.id,))
+    cursor.execute("SELECT illustration FROM proxies WHERE id = ?", (args.id,))
     row = cursor.fetchone()
 
     printer.image(Image.open(BytesIO(row["illustration"])), impl="bitImageColumn")
