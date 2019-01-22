@@ -6,6 +6,7 @@ from atexit import register
 from escpos.printer import Serial
 from evdev import InputDevice, categorize, ecodes
 from io import BytesIO
+from logging import getLogger
 from json import loads
 from PIL import Image
 from sqlite3 import connect, Row
@@ -13,13 +14,14 @@ from textwrap import wrap
 
 
 class RandomProxyPrinter:
-    def __init__(self, printer, display, knob, button, connection, asyncio):
+    def __init__(self, printer, display, knob, button, connection, asyncio, logger):
         self.printer = printer
         self.display = display
         self.knob = knob
         self.button = button
         self.connection = connection
         self.asyncio = asyncio
+        self.logger = logger
         self.value = 0
 
         self.update_display()
@@ -30,9 +32,13 @@ class RandomProxyPrinter:
     async def _handle_event(self, device):
         async for event in device.async_read_loop():
             if event.type == 1 and event.value == 1:
+                self.logger.debug("Selecting random card for value %(value)", value=str(self.value))
+
                 cursor = self.connection.cursor()
-                cursor.execute("SELECT * FROM proxies WHERE value = ? ORDER BY RANDOM() LIMIT 1", (str(self.value)))
+                cursor.execute("SELECT * FROM proxies WHERE value = ? ORDER BY RANDOM() LIMIT 1", (str(self.value, )))
                 proxy = cursor.fetchone()
+
+                self.logger.debug("Random card %(name) selected", name=proxy.name)
 
                 self.printer.image(Image.open(BytesIO(proxy["illustration"])), impl="bitImageColumn")
                 for line in proxy["description"].split("\n"):
@@ -81,7 +87,7 @@ class RandomProxyPrinter:
         loop.run_forever()
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(description="Random proxy printer daemon")
     parser.add_argument("-d", "--database-path", help="Path to random proxy printer SQLite database", required=True, dest="database_path")
     parser.add_argument("-k", "--knob", help="Path to input event device for the knob", required=True)
@@ -89,8 +95,19 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--display-address", help="I2C address for the seven segment display", dest="display_address", required=True)
     parser.add_argument("-p", "--printer", help="Path to printer device", required=True)
     parser.add_argument("-r", "--printer-baudrate", help="Printer baudrate", default=19200, dest="baudrate")
+    parser.add_argument("-v", "--verbose", action="store_true")
 
     args = parser.parse_args()
+
+    logger = getLogger("proxy_printer")
+    logger.setLevel(DEBUG)
+
+    console_handler = StreamHandler()
+    if args.verbose:
+        console_handler.setLevel(DEBUG)
+    else:
+        console_handler.setLevel(ERROR)
+    logger.addHandler(console_handler)
 
     display = SevenSegment.SevenSegment(address=int(args.display_address, 16))
     display.begin()
@@ -108,6 +125,12 @@ if __name__ == "__main__":
     connection = connect(args.database_path)
     connection.row_factory = Row
 
-    proxy_printer = RandomProxyPrinter(printer, display, knob, button, connection, asyncio)
+    proxy_printer = RandomProxyPrinter(printer, display, knob, button, connection, asyncio, logger)
     register(proxy_printer.clear_display)
     proxy_printer.run()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit(0)
