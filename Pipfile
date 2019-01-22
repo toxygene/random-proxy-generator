@@ -11,6 +11,7 @@ adafruit-led-backpack = "*"
 evdev = "*"
 pillow = "*"
 unidecode = "*"
+pyyaml = "*"
 
 [dev-packages]
 
