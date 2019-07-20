@@ -1,3 +1,6 @@
+# DEVELOPMENT OF THIS PROJECT HAS MOVED
+https://github.com/toxygene/random-proxy-printer
+
 # Random Proxy Printer
 
 TODO photo of box here
